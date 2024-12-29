@@ -60,4 +60,79 @@ fun HomeScreen(
     Modifier = Modifier,
     onDetailClick: (String) -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = PenyediaViewModel.Factory),
-){}
+){
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    Scaffold(
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            CostumeTopAppBar(
+                title = DestinasiHome.titleRes,
+                canNavigateBack = false,
+                scrollBehavior = scrollBehavior,
+                onRefresh = {
+                    viewModel.getMhs()
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = navigateToItemEntry,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.
+                padding(18.
+                dp)
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Mahasiswa")
+            }
+        },
+    ) { innerPadding ->
+        HomeStatus(
+            homeUiState = viewModel.mhsUiState,
+            retryAction = { viewModel.getMhs() }, modifier = Modifier.padding(innerPadding),
+            onDetailClick = onDetailClick, onDeleteClick = {
+                viewModel.deleteMhs(it.nim )
+                viewModel.getMhs()
+            }
+        )
+    }
+}
+
+@Composable
+fun HomeStatus(
+    homeUiState: HomeUiState,
+    retryAction: () -> Unit,
+    modifier: Modifier = Modifier,
+    onDeleteClick: (Mahasiswa) -> Unit = {},
+    onDetailClick: (String) -> Unit
+) {
+    when (
+        homeUiState) {
+        is HomeUiState.Loading -> OnLoading(modifier =
+        modifier.fillMaxSize())
+        is HomeUiState.Success ->
+            if (
+                homeUiState.mahasiswa.isEmpty()){
+                return
+                Box(modifier = modifier.
+                fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "Tidak ada data Mahasiswa" )
+                }
+            }else {
+                MhsLayout(
+                    mahasiswa = homeUiState.mahasiswa,
+                    modifier = modifier.fillMaxWidth(),
+                    onDetailClick = {
+                        onDetailClick(it.nim)
+                    },
+                    onDeleteClick = {
+                        onDeleteClick(it)
+                    }
+                )
+            }
+        is HomeUiState.Erorr -> OnError(
+            retryAction,
+            modifier = modifier.fillMaxSize()
+        )
+    }
+}
+
